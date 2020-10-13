@@ -26,7 +26,7 @@ from . import _io_kernel as io
 
 __all__ = [
     "ArchiveReader", "ScriptReader", "AlignArchiveReader", "AlignScriptReader",
-    "ArchiveWriter", "Nnet3EgsReader", "Reader"
+    "ArchiveWriter", "Nnet3EgsReader", "Nnet3EgsScriptReader", "Reader"
 ]
 
 
@@ -96,7 +96,7 @@ class ext_open(object):
     To make _fopen/_fclose easy to use like:
     with open("egs.scp", "r") as f:
         ...
-    
+
     """
     def __init__(self, fname, mode):
         self.fname = fname
@@ -172,6 +172,8 @@ class Reader(object):
         if type(index) not in [int, str]:
             raise IndexError("Unsupported index type: {}".format(type(index)))
         if type(index) == int:
+            if index < 0:
+                index %= len(self.index_keys)
             # from int index to key
             num_utts = len(self.index_keys)
             if index >= num_utts or index < 0:
@@ -281,6 +283,42 @@ class Nnet3EgsReader(SequentialReader):
         with ext_open(self.ark_or_pipe, "rb") as fd:
             for key, egs in io.read_nnet3_egs_ark(fd):
                 yield key, egs
+
+
+class Nnet3EgsScriptReader(Reader):
+    """
+        Reader for kaldi's scripts(for Nnet3 egs)
+    """
+
+    def __init__(self, ark_scp):
+        self.fmgr = dict()
+
+        def addr_processor(addr):
+            addr_token = addr.split(":")
+            if len(addr_token) == 1:
+                raise ValueError("Unsupported scripts address format")
+            path, offset = ":".join(addr_token[0:-1]), int(addr_token[-1])
+            return (path, offset)
+
+        super(Nnet3EgsScriptReader, self).__init__(
+            ark_scp, value_processor=addr_processor)
+
+    def __del__(self):
+        for name in self.fmgr:
+            self.fmgr[name].close()
+
+    def _open(self, obj, addr):
+        if obj not in self.fmgr:
+            self.fmgr[obj] = open(obj, "rb")
+        arkf = self.fmgr[obj]
+        arkf.seek(addr)
+        return arkf
+
+    def _load(self, key):
+        path, addr = self.index_dict[key]
+        fd = self._open(path, addr)
+        obj = io.read_nnet3_egs(fd, direct_access=True)
+        return obj
 
 
 class AlignArchiveReader(SequentialReader):

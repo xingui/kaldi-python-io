@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from kaldi_python_io import ScriptReader, ArchiveReader
+from kaldi_python_io import ScriptReader, ArchiveReader, Nnet3EgsScriptReader
 from kaldi_python_io import AlignArchiveReader, Nnet3EgsReader
 from kaldi_python_io import ArchiveWriter
 
@@ -57,6 +57,13 @@ def test_nnet3egs_reader(egs):
     print("TEST *test_nnet3egs_reader* DONE!")
 
 
+def test_nnet3egs_script_reader(scp):
+    scp_reader = Nnet3EgsScriptReader(scp)
+    for key, obj in scp_reader:
+        print("{0}: {1}".format(key, len(obj)))
+    print("TEST *test_nnet3egs_script_reader* DONE!")
+
+
 if __name__ == "__main__":
     test_archive_writer("asset/foo.ark", "asset/foo.scp")
     # archive_reader
@@ -71,3 +78,5 @@ if __name__ == "__main__":
     test_align_archive_reader("gunzip -c asset/10.ali.gz |")
     # nnet3egs_reader
     test_nnet3egs_reader("asset/10.egs")
+    # nnet3egs_script_reader
+    test_nnet3egs_script_reader("asset/1.scp")

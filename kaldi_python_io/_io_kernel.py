@@ -431,12 +431,14 @@ def read_nnet_io(fd):
     return nnet_io
 
 
-def read_nnet3_egs(fd):
+def read_nnet3_egs(fd, direct_access=False):
     """ 
         Reference to function Read in class NnetExample
         Return a list of dict, each dict represent a NnetIo object
         a NnetExample contains several NnetIo
     """
+    if direct_access:
+        expect_binary(fd)
     expect_token(fd, '<Nnet3Eg>')
     expect_token(fd, '<NumIo>')
     # num of the NnetIo
