@@ -33,6 +33,13 @@ A python (3.6+) wrapper for Kaldi's data accessing.
         print(key)
     ```
 
+* Nnet3EgsScriptReader
+    ```
+    scp_reader = Nnet3EgsScriptReader("egs.scp")
+    for key, obj in scp_reader:
+        print("{0}: {1}".format(key, len(obj)))
+    ```
+
 * ArchiveWriter
     ```python
     with ArchiveWriter("foo.ark", "foo.scp") as writer:
